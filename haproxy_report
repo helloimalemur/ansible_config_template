@@ -1,0 +1,19 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: haproxy statistics report
+      shell: |
+        cat haproxy.log | halog -srv -H -q | awk 'NR==1; NR > 1 {print $0 | "sort -n -r -k 9"}' | column -t
+        echo 'Servers by errors----------------'
+        cat haproxy.log | halog -srv -H -q | awk 'NR==1; NR >1 {print $0 | "sort -n -r -k 5"}' | column -t
+        echo 'URLs by number of errors-------------------'
+        cat haproxy.log | halog -ue -H -q | column -t | less
+        echo 'URLs by server computation time-------------'
+        cat haproxy.log | halog -ut -H -q | column -t
+	echo 'URLs with 404 errors----------------'
+        cat haproxy.log | halog -u -H -q -hs 404 | column -t
+        echo 'URLs by number of requests--------------------'
+        cat haproxy.log | halog -u -H -q | awk 'NR==1; NR > 1 {print $0 | "sort -n -r -k 1"}' | column -t | less
+      register: stats
+
+    - debug: var=stats.stdout_lines
